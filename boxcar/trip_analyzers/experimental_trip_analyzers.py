@@ -1,19 +1,19 @@
+# Has to exist
+from boxcar.core import db
+
 from geoalchemy import WKTSpatialElement
 from sqlalchemy import func
 
-from boxcar import util
+from boxcar.core import adapters
 
 
-from sqlalchemy import Column, Integer, DateTime
-from sqlalchemy.dialects.mysql import TINYINT
 from geoalchemy import GeometryColumn
 from geoalchemy import GeometryDDL
+from geoalchemy import Point
 from geoalchemy import mysql
+from sqlalchemy import Column, Integer, DateTime
+from sqlalchemy.dialects.mysql import TINYINT
 
-from boxcar.core import db
-
-
-from db.geoalchemy import Point
 
 
 class TripEvent(db.Base):
@@ -76,7 +76,7 @@ class InnoDBTripAnalyzer(object):
         for trip_event in trip_events:
             event = TripEvent(
                 event_id=trip_event.id,
-                coordinate=util.convert_coordinate_to_wkt(trip_event.location),
+                coordinate=adapters.convert_coordinate_to_wkt(trip_event.location),
                 time=trip_event.time,
                 type=trip_event.type,
             )
@@ -91,7 +91,7 @@ class InnoDBTripAnalyzer(object):
                 dict(
                     event_id=trip_event.id,
                     coordinate=func.GeomFromText(
-                        util.convert_coordinate_to_wkt(
+                        adapters.convert_coordinate_to_wkt(
                             trip_event.location
                         )
                     ),
@@ -106,7 +106,7 @@ class InnoDBTripAnalyzer(object):
         session = db.Session()
         event = TripEvent(
             event_id=trip_event.id,
-            coordinate=util.convert_coordinate_to_wkt(trip_event.location),
+            coordinate=adapters.convert_coordinate_to_wkt(trip_event.location),
             time=trip_event.time,
             type=trip_event.type,
         )
@@ -115,7 +115,7 @@ class InnoDBTripAnalyzer(object):
 
     def get_trips_that_passed_through_geo_rect(self, geo_rect):
         session = db.Session()
-        box = WKTSpatialElement(util.convert_geo_rect_to_wkt(geo_rect))
+        box = WKTSpatialElement(adapters.convert_geo_rect_to_wkt(geo_rect))
         query = session.query(TripEvent).filter(
             box.intersects(TripEvent.coordinate)
         )

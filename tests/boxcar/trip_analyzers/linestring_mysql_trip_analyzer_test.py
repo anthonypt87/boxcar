@@ -1,13 +1,12 @@
+import datetime
 import unittest
 
 from boxcar.core import domain_objects
 from boxcar.trip_analyzers.linestring_mysql_trip_analyzer \
     import LinestringMySQLTripAnalyzer
-from boxcar.trip_analyzers.linestring_mysql_trip_analyzer \
-    import Trip
 
 
-class LinestringMySQLTripAnalyzerTest(unittest.TestCase):
+class LinestringMySQLTripAnalyzerIntegrationTest(unittest.TestCase):
 
     def test_add_whole_trip_events(self):
         trip = self._create_trip()
@@ -32,7 +31,13 @@ class LinestringMySQLTripAnalyzerTest(unittest.TestCase):
             domain_objects.Coordinate(4, 4),
             domain_objects.Coordinate(5, 4)
         ]
-        return Trip(event_id, path)
+        return domain_objects.Trip(
+            id=event_id,
+            path=path,
+            start_time=datetime.datetime.now(),
+            end_time=datetime.datetime.now(),
+            fare=4
+        )
 
 
 if __name__ == '__main__':

@@ -16,7 +16,7 @@ class LinestringMySQLTripAnalyzer(object):
 
     def add_trip(self, trip):
         session = db.Session()
-        trip = db.Trip(
+        trip = Trip(
             event_id=trip.id,
             path=adapters.convert_coordinates_to_linestring(
                 trip.path
@@ -28,8 +28,8 @@ class LinestringMySQLTripAnalyzer(object):
     def get_trips_that_passed_through_geo_rect(self, geo_rect):
         session = db.Session()
         box = WKTSpatialElement(adapters.convert_geo_rect_to_wkt(geo_rect))
-        query = session.query(db.Trip).filter(
-            box.intersects(db.Trip.path)
+        query = session.query(Trip).filter(
+            box.intersects(Trip.path)
         )
         counts = query.count()
         session.commit()

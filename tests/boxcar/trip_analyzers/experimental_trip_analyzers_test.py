@@ -7,12 +7,14 @@ from boxcar.trip_analyzers.experimental_trip_analyzers \
     import InnoDBTripAnalyzer
 from boxcar.trip_analyzers.experimental_trip_analyzers \
     import TripEvent
+from boxcar.core import domain_objects
 
 
 class InnoDBTripAnalyzerTest(unittest.TestCase):
 
     def setUp(self):
         session = db.Session()
+        session.query(TripEvent).delete()
         session.query(TripEvent).filter_by(id=4).delete()
         session.commit()
 
@@ -35,7 +37,12 @@ class InnoDBTripAnalyzerTest(unittest.TestCase):
         location = domain_objects.Coordinate(37.79947, -122.511635)
         event_time = datetime.datetime.now()
         event_type = 1
-        return TripEvent(event_id, location, event_time, event_type)
+        return domain_objects.TripEvent(
+            event_id,
+            location,
+            event_time,
+            event_type
+        )
 
 
 if __name__ == '__main__':
