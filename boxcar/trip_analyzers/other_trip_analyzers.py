@@ -1,9 +1,35 @@
-from sqlalchemy import func
-from boxcar.persistence_layers import innodb
 from geoalchemy import WKTSpatialElement
+from sqlalchemy import func
 
 from boxcar import util
 
+
+from sqlalchemy import Column, Integer, DateTime
+from sqlalchemy.dialects.mysql import TINYINT
+from geoalchemy import GeometryColumn
+from geoalchemy import GeometryDDL
+from geoalchemy import mysql
+
+from boxcar.core import db
+
+
+from db.geoalchemy import Point
+
+
+class TripEvent(db.Base):
+    __tablename__ = 'trip_event'
+    __table_args__ = {'mysql_engine': 'MyISAM'}
+    id = Column(Integer, primary_key=True)
+    event_id = Column(Integer)
+    coordinate = GeometryColumn(
+        Point(2),
+        comparator=mysql.MySQLComparator
+    )
+    time = Column(DateTime)
+    type = Column(TINYINT(2), default=0)
+
+
+GeometryDDL(TripEvent.__table__)
 
 
 class TripAnalyzer(object):
@@ -27,30 +53,6 @@ class TripAnalyzer(object):
         pass
 
 
-class WholeTripAnalyzer(object):
-
-    def add_trip(self, trip):
-        session = innodb.Session()
-        trip = innodb.Trip(
-            event_id=trip.id,
-            path=util.convert_coordinates_to_linestring(
-                trip.path
-            )
-        )
-        session.add(trip)
-        session.commit()
-
-    def get_trips_that_passed_through_geo_rect(self, geo_rect):
-        session = innodb.Session()
-        box = WKTSpatialElement(util.convert_geo_rect_to_wkt(geo_rect))
-        query = session.query(innodb.Trip).filter(
-            box.intersects(innodb.Trip.path)
-        )
-        counts = query.count()
-        session.commit()
-        return counts
-
-
 # Kafka. Ordering
 
 
@@ -70,9 +72,9 @@ class InnoDBTripAnalyzer(object):
 
     def add_trip_events_2(self, trip_events):
         # This is too slow. We have to use sqlalchemy core to do bulk inserts.
-        session = innodb.Session()
+        session = db.Session()
         for trip_event in trip_events:
-            event = innodb.TripEvent(
+            event = TripEvent(
                 event_id=trip_event.id,
                 coordinate=util.convert_coordinate_to_wkt(trip_event.location),
                 time=trip_event.time,
@@ -82,25 +84,27 @@ class InnoDBTripAnalyzer(object):
         session.commit()
 
     def add_trip_events(self, trip_events):
-        session = innodb.Session()
+        session = db.Session()
         params = []
         for trip_event in trip_events:
             params.append(
                 dict(
                     event_id=trip_event.id,
-                    coordinate=func.GeomFromText(util.convert_coordinate_to_wkt(
-                        trip_event.location
-                    )),
+                    coordinate=func.GeomFromText(
+                        util.convert_coordinate_to_wkt(
+                            trip_event.location
+                        )
+                    ),
                     time=trip_event.time.isoformat(),
                     type=trip_event.type
                 )
             )
-        session.execute(innodb.TripEvent.__table__.insert(values=params))
+        session.execute(TripEvent.__table__.insert(values=params))
         session.commit()
 
     def add_trip_event(self, trip_event):
-        session = innodb.Session()
-        event = innodb.TripEvent(
+        session = db.Session()
+        event = TripEvent(
             event_id=trip_event.id,
             coordinate=util.convert_coordinate_to_wkt(trip_event.location),
             time=trip_event.time,
@@ -110,10 +114,10 @@ class InnoDBTripAnalyzer(object):
         session.commit()
 
     def get_trips_that_passed_through_geo_rect(self, geo_rect):
-        session = innodb.Session()
+        session = db.Session()
         box = WKTSpatialElement(util.convert_geo_rect_to_wkt(geo_rect))
-        query = session.query(innodb.TripEvent).filter(
-            box.intersects(innodb.TripEvent.coordinate)
+        query = session.query(TripEvent).filter(
+            box.intersects(TripEvent.coordinate)
         )
         counts = query.count()
         session.commit()

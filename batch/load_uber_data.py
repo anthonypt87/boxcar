@@ -3,7 +3,7 @@ import contextlib
 import argparse
 import dateutil.parser
 from boxcar import core
-from boxcar import trip_analyzer
+from boxcar.trip_analyzers import linestring_mysql_trip_analyzer
 import itertools
 
 
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     parser.add_argument('uber_path')
     args = parser.parse_args()
 
-    analyzer = trip_analyzer.WholeTripAnalyzer()
+    analyzer = linestring_mysql_trip_analyzer.LinestringMySQLTripAnalyzer()
     tsv_loader = get_tsv_loader(args.uber_path)
 
     UberDataLoader(analyzer, tsv_loader).load_uber_data()

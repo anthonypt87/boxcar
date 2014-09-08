@@ -4,7 +4,7 @@ import mock
 import unittest
 
 from batch import load_uber_data
-from boxcar import core
+from boxcar.core import domain_objects
 
 
 class LoadUberDataTest(unittest.TestCase):
@@ -23,10 +23,10 @@ class LoadUberDataTest(unittest.TestCase):
             mock_tsv_loader,
         )
         loader.load_uber_data()
-        trip_event = core.TripEvent(
+        trip_event = domain_objects.TripEvent(
             id=1,
             time=datetime.datetime(2007, 1, 7, 10, 54, 50, tzinfo=tz.tzutc()),
-            location=core.Coordinate(
+            location=domain_objects.Coordinate(
                 37.782551,
                 -122.445368
             ),
