@@ -41,11 +41,11 @@ class AddWholeTripAnalyzerTest(unittest.TestCase):
 
     def test_add_whole_trip_events(self):
         trip = self._create_trip()
-        analyzer = trip_analyzer.WholeTripAnalyzer(trip)
-        analyzer.add_trip_event(trip_event)
+        analyzer = trip_analyzer.WholeTripAnalyzer()
+        analyzer.add_trip(trip)
         geo_rect = core.GeoRect.create_from_lat_lngs(
-            -50, -175,
-            50, 175
+            0, 0,
+            3, 3
         )
         number_of_trips = \
             analyzer.get_trips_that_passed_through_geo_rect(

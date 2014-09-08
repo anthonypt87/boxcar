@@ -45,14 +45,15 @@ class TripEvent(Base):
     type = Column(TINYINT(2), default=0)
 
 
-class WholeTrip(Base):
+class Trip(Base):
     __tablename__ = 'whole_trip'
     __table_args__ = {'mysql_engine': 'MyISAM'}
     id = Column(Integer, primary_key=True)
     event_id = Column(Integer)
     path = GeometryColumn(
         LineString,
-        comparator=mysql.MySQLComparator
+        comparator=mysql.MySQLComparator,
+        nullable=False
     )
 
 

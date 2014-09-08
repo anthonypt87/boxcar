@@ -8,7 +8,7 @@ from boxcar import util
 
 class TripAnalyzer(object):
 
-    def add_trip_event(self, trip_event):
+    def add_trip(self, trip):
         pass
 
     def get_number_of_trips_started_or_stopped_in_geo_rect(self, geo_rect):
@@ -27,25 +27,39 @@ class TripAnalyzer(object):
         pass
 
 
+class WholeTripAnalyzer(object):
+
+    def add_trip(self, trip):
+        session = innodb.Session()
+        trip = innodb.Trip(
+            event_id=trip.id,
+            path=util.convert_coordinates_to_linestring(
+                trip.path
+            )
+        )
+        session.add(trip)
+        session.commit()
+
+    def get_trips_that_passed_through_geo_rect(self, geo_rect):
+        session = innodb.Session()
+        box = WKTSpatialElement(util.convert_geo_rect_to_wkt(geo_rect))
+        query = session.query(innodb.Trip).filter(
+            box.intersects(innodb.Trip.path)
+        )
+        counts = query.count()
+        session.commit()
+        return counts
+
+
+# Kafka. Ordering
+
+
 class LatLngTripInnoDBAnalyzer(object):
     pass
 
 
 class InnoDBSpatial(object):
     pass
-
-
-class WholeTripAnalyzer(object):
-
-    def add_whole_trip_events(self, trip_events):
-        coordinates = [
-            trip_event.coordinate for
-        ]
-        for trip_event in trip_events:
-            innodb.WholeTrip(
-
-            )
-
 
 
 class ElasticSearch(object):

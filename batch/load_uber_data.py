@@ -24,13 +24,16 @@ def get_tsv_loader(filename):
     return _inner
 
 
+# Kafka. Ordering
+
+
 class UberDataLoader(object):
 
     def __init__(self, trip_analyzer, tsv_loader):
         self._trip_analyzer = trip_analyzer
         self._tsv_loader = tsv_loader
 
-    def load_uber_data_3(self):
+    def load_uber_data(self):
         with self._tsv_loader() as loader:
             for i, group in enumerate(grouper(loader, 10000)):
                 trip_events = [
@@ -45,7 +48,7 @@ class UberDataLoader(object):
                 trip_event = self._create_trip_event_from_row(row)
                 self._trip_analyzer.add_trip_event(trip_event)
 
-    def load_uber_data(self):
+    def load_uber_data_44(self):
         with self._tsv_loader() as loader:
             previous_row_id = None
             rows = []
@@ -63,6 +66,35 @@ class UberDataLoader(object):
                     previous_row_id = None
                 else:
                     rows.append(row)
+
+    def load_uber_data(self):
+        with self._tsv_loader() as loader:
+            previous_row_id = None
+            rows = []
+            for i, row in enumerate(loader):
+                if previous_row_id is None:
+                    previous_row_id = row['id']
+                if row['id'] != previous_row_id:
+                    print i
+                    trip = self._create_trip_from_rows(rows)
+                    self._trip_analyzer.add_trip(trip)
+                    rows = []
+                    previous_row_id = None
+                else:
+                    rows.append(row)
+
+    def _create_trip_from_rows(self, rows):
+        path = [
+            core.Coordinate(
+                row['lat'],
+                row['lng']
+            ) for row in rows
+        ]
+        row = rows[0]
+        return core.Trip(
+            id=row['id'],
+            path=path
+        )
 
     def _create_trip_event_from_row(self, row):
         return core.TripEvent(
@@ -83,7 +115,7 @@ if __name__ == '__main__':
     parser.add_argument('uber_path')
     args = parser.parse_args()
 
-    analyzer = trip_analyzer.InnoDBTripAnalyzer()
+    analyzer = trip_analyzer.WholeTripAnalyzer()
     tsv_loader = get_tsv_loader(args.uber_path)
 
     UberDataLoader(analyzer, tsv_loader).load_uber_data()

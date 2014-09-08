@@ -28,5 +28,20 @@ class ConvertGeoRectToWKT(unittest.TestCase):
         )
 
 
+class ConvertCoordinatesToLineString(unittest.TestCase):
+
+    def test_conversion(self):
+        coordinates = [
+            core.Coordinate(1, 2),
+            core.Coordinate(3, 4)
+        ]
+        self.assertEqual(
+            util.convert_coordinates_to_linestring(
+                coordinates
+            ),
+            'LINESTRING(1 2, 3 4)'
+        )
+
+
 if __name__ == '__main__':
     unittest.main()
