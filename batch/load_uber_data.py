@@ -1,15 +1,11 @@
-import csv
-import contextlib
 import argparse
+import contextlib
+import csv
+
 import dateutil.parser
-from boxcar import core
+
+from boxcar.core import domain_objects
 from boxcar.trip_analyzers import linestring_mysql_trip_analyzer
-import itertools
-
-
-def grouper(iterable, n, fillvalue=None):
-    args = [iter(iterable)] * n
-    return itertools.izip_longest(*args, fillvalue=fillvalue)
 
 
 def get_tsv_loader(filename):
@@ -24,10 +20,9 @@ def get_tsv_loader(filename):
     return _inner
 
 
-# Kafka. Ordering
-
-
 class UberDataLoader(object):
+
+    DEFAULT_FARE = 10
 
     def __init__(self, trip_analyzer, tsv_loader):
         self._trip_analyzer = trip_analyzer
@@ -35,76 +30,38 @@ class UberDataLoader(object):
 
     def load_uber_data(self):
         with self._tsv_loader() as loader:
-            for i, group in enumerate(grouper(loader, 10000)):
-                trip_events = [
-                    self._create_trip_event_from_row(row)
-                    for row in group
-                ]
-                self._trip_analyzer.add_trip_events(trip_events)
-
-    def load_uber_data_2(self):
-        with self._tsv_loader() as loader:
+            previous_row_id = None
+            rows = []
             for row in loader:
-                trip_event = self._create_trip_event_from_row(row)
-                self._trip_analyzer.add_trip_event(trip_event)
-
-    def load_uber_data_44(self):
-        with self._tsv_loader() as loader:
-            previous_row_id = None
-            rows = []
-            for i, row in enumerate(loader):
                 if previous_row_id is None:
                     previous_row_id = row['id']
                 if row['id'] != previous_row_id:
-                    trip_events = [
-                        self._create_trip_event_from_row(row_to_add)
-                        for row_to_add in rows
-                    ]
-                    self._trip_analyzer.add_trip_events(trip_events)
-                    print i
+                    self._add_trip_rows(rows)
                     rows = []
-                    previous_row_id = None
-                else:
-                    rows.append(row)
-
-    def load_uber_data(self):
-        with self._tsv_loader() as loader:
-            previous_row_id = None
-            rows = []
-            for i, row in enumerate(loader):
-                if previous_row_id is None:
                     previous_row_id = row['id']
-                if row['id'] != previous_row_id:
-                    print i
-                    trip = self._create_trip_from_rows(rows)
-                    self._trip_analyzer.add_trip(trip)
-                    rows = []
-                    previous_row_id = None
                 else:
                     rows.append(row)
+            if rows:
+                self._add_trip_rows(rows)
+
+    def _add_trip_rows(self, rows):
+        trip = self._create_trip_from_rows(rows)
+        self._trip_analyzer.add_trip(trip)
 
     def _create_trip_from_rows(self, rows):
         path = [
-            core.Coordinate(
-                row['lat'],
-                row['lng']
-            ) for row in rows
-        ]
-        row = rows[0]
-        return core.Trip(
-            id=row['id'],
-            path=path
-        )
-
-    def _create_trip_event_from_row(self, row):
-        return core.TripEvent(
-            id=int(row['id']),
-            location=core.Coordinate(
+            domain_objects.Coordinate(
                 float(row['lat']),
                 float(row['lng'])
-            ),
-            time=dateutil.parser.parse(row['time']),
-            type=1,
+            ) for row in rows
+        ]
+        row_id = rows[0]['id']
+        return domain_objects.Trip(
+            id=int(row_id),
+            path=path,
+            start_time=dateutil.parser.parse(rows[0]['time']),
+            end_time=dateutil.parser.parse(rows[-1]['time']),
+            fare=self.DEFAULT_FARE
         )
 
 

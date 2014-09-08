@@ -1,4 +1,4 @@
-# This needs to be on top to fix to geoalchemy
+# This needs to be on top to fix geoalchemy
 from boxcar.core import db
 
 from geoalchemy import GeometryColumn

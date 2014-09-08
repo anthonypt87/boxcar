@@ -7,7 +7,7 @@ Coordinate = namedtuple('Coordinate', 'lat lng')
 TripEvent = namedtuple('TripEvent', 'id location time type')
 
 
-Trip = namedtuple('Trip', 'id path')
+Trip = namedtuple('Trip', 'id path start_time end_time fare')
 
 
 class GeoRect(object):

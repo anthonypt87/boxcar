@@ -7,7 +7,7 @@ from batch import load_uber_data
 from boxcar.core import domain_objects
 
 
-class LoadUberDataTest(unittest.TestCase):
+class UberDataLoaderTest(unittest.TestCase):
 
     def test_load_uber_data(self):
         mock_tsv_loader = mock.MagicMock()
@@ -23,19 +23,18 @@ class LoadUberDataTest(unittest.TestCase):
             mock_tsv_loader,
         )
         loader.load_uber_data()
-        trip_event = domain_objects.TripEvent(
+        time = datetime.datetime(2007, 1, 7, 10, 54, 50, tzinfo=tz.tzutc())
+        trip = domain_objects.Trip(
             id=1,
-            time=datetime.datetime(2007, 1, 7, 10, 54, 50, tzinfo=tz.tzutc()),
-            location=domain_objects.Coordinate(
-                37.782551,
-                -122.445368
-            ),
-            # TODO: figure out later
-            type=1
+            start_time=time,
+            end_time=time,
+            path=[domain_objects.Coordinate(37.782551, -122.445368)],
+            fare=load_uber_data.UberDataLoader.DEFAULT_FARE
         )
-        trip_analyzer.add_trip_event.assert_called_once_with(
-            trip_event
-        )
+        trip_analyzer.add_trip.assert_called_once_with(trip)
+
+    def test_load_two_datas(self):
+        pass
 
 
 if __name__ == '__main__':
