@@ -1,12 +1,19 @@
 import datetime
 import unittest
 
+from boxcar.core import db
 from boxcar.core import domain_objects
 from boxcar.trip_analyzers.linestring_mysql_trip_analyzer \
     import LinestringMySQLTripAnalyzer
+from boxcar.trip_analyzers.linestring_mysql_trip_analyzer \
+    import Trip
 
 
 class LinestringMySQLTripAnalyzerIntegrationTest(unittest.TestCase):
+
+    def setUp(self):
+        session = db.Session()
+        session.query(Trip).delete()
 
     def test_add_whole_trip_events(self):
         trip = self._create_trip()
