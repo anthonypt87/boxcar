@@ -1,13 +1,22 @@
 from sqlalchemy import create_engine
+from sqlalchemy import MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 
-Base = declarative_base()
+metadata = MetaData()
+Base = declarative_base(metadata=metadata)
+
+postgres_metadata = MetaData()
+PostgresBase = declarative_base(metadata=postgres_metadata)
 
 
 engine = create_engine('mysql://root@localhost/boxcar')
 Session = sessionmaker(bind=engine)
+
+psql_engine = create_engine('postgresql://anthony@localhost/anthony', echo=True)
+PSQLSession = sessionmaker(bind=psql_engine)
+
 
 def patch_geoalchemy():
     import sqlalchemy

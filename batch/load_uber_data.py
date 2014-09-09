@@ -6,6 +6,7 @@ import dateutil.parser
 
 from boxcar.core import domain_objects
 from boxcar.trip_analyzers import linestring_mysql_trip_analyzer
+from boxcar.trip_analyzers.postgis_trip_analyzer import PostGISTripAnalyzer
 
 
 def get_tsv_loader(filename):
@@ -32,7 +33,9 @@ class UberDataLoader(object):
         with self._tsv_loader() as loader:
             previous_row_id = None
             rows = []
-            for row in loader:
+            for i, row in enumerate(loader):
+                if i % 5000 == 0:
+                    print i
                 if previous_row_id is None:
                     previous_row_id = row['id']
                 if row['id'] != previous_row_id:
@@ -45,6 +48,8 @@ class UberDataLoader(object):
                 self._add_trip_rows(rows)
 
     def _add_trip_rows(self, rows):
+        if len(rows) <= 1:
+            return
         trip = self._create_trip_from_rows(rows)
         self._trip_analyzer.add_trip(trip)
 
@@ -73,6 +78,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     analyzer = linestring_mysql_trip_analyzer.LinestringMySQLTripAnalyzer()
+    #analyzer = PostGISTripAnalyzer()
     tsv_loader = get_tsv_loader(args.uber_path)
 
     UberDataLoader(analyzer, tsv_loader).load_uber_data()
