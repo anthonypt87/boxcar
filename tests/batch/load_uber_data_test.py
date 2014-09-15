@@ -24,12 +24,15 @@ class UberDataLoaderTest(unittest.TestCase):
         )
         loader.load_uber_data()
         time = datetime.datetime(2007, 1, 7, 10, 54, 50, tzinfo=tz.tzutc())
+        coordinate = domain_objects.Coordinate(37.782551, -122.445368)
         trip = domain_objects.Trip(
             id=1,
             start_time=time,
             end_time=time,
-            path=[domain_objects.Coordinate(37.782551, -122.445368)],
-            fare=load_uber_data.UberDataLoader.DEFAULT_FARE
+            path=[coordinate],
+            fare=load_uber_data.UberDataLoader.DEFAULT_FARE,
+            start_point=coordinate,
+            end_point=coordinate
         )
         trip_analyzer.add_trip.assert_called_once_with(trip)
 

@@ -14,7 +14,7 @@ PostgresBase = declarative_base(metadata=postgres_metadata)
 engine = create_engine('mysql://root@localhost/boxcar')
 Session = sessionmaker(bind=engine)
 
-psql_engine = create_engine('postgresql://anthony@localhost/anthony', echo=True)
+psql_engine = create_engine('postgresql://anthony@localhost/anthony')
 PSQLSession = sessionmaker(bind=psql_engine)
 
 

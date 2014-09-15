@@ -7,7 +7,7 @@ Coordinate = namedtuple('Coordinate', 'lat lng')
 TripEvent = namedtuple('TripEvent', 'id location time type')
 
 
-Trip = namedtuple('Trip', 'id path start_time end_time fare')
+Trip = namedtuple('Trip', 'id path start_time end_time fare start_point end_point')
 
 
 class GeoRect(object):
@@ -26,8 +26,8 @@ class GeoRect(object):
         return [
             Coordinate(self._coordinate_1.lat, self._coordinate_1.lng),
             Coordinate(self._coordinate_1.lat, self._coordinate_2.lng),
+            Coordinate(self._coordinate_2.lat, self._coordinate_2.lng),
             Coordinate(self._coordinate_2.lat, self._coordinate_1.lng),
-            Coordinate(self._coordinate_2.lat, self._coordinate_2.lng)
         ]
 
     def __eq__(self, other_rect):

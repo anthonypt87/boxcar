@@ -38,8 +38,7 @@ class LinestringMySQLTripAnalyzer(object):
 
 class Trip(db.Base):
 
-    __tablename__ = 'whole_trip'
-    __table_args__ = {'mysql_engine': 'MyISAM'}
+    __tablename__ = 'trip'
     id = Column(Integer, primary_key=True)
     event_id = Column(Integer)
     path = GeometryColumn(
