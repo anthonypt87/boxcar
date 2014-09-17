@@ -1,3 +1,5 @@
+import shapely.wkt
+from shapely import geometry
 from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import func
@@ -11,22 +13,44 @@ from boxcar.core import db
 from boxcar.core.adapters import WKTAdapter
 
 
-class PostGISTripAnalyzer(object):
+class OngoingTripAnalyzer(object):
 
     def __init__(self):
-        self._trip_adapter = PostGISTripAdapter()
+        self._adapter = Adapter()
 
-    def add_trip(self, core_trip):
+    def add_trip_event_to_be_analyzed(self, trip_event):
         session = db.PSQLSession()
-        trip = self._trip_adapter.adapt(core_trip)
-        session.add(trip)
+        location = geometry.Point(trip_event.location.lat, trip_event.location.lng)
+        print trip_event.id
+        trip = session.query(OngoingTrip).filter_by(id=trip_event.id).first()
+        if trip is None:
+            trip = OngoingTrip(
+                id=trip_event.id,
+                start_time=trip_event.time,
+                start_point=self._adapter.get_adapted_coordinate(
+                    trip_event.location
+                ),
+                path=self._adapter.get_adapted_path([trip_event.location, trip_event.location])
+            )
+            session.add(trip)
+        else:
+            session.query(OngoingTrip).update(
+                {
+                    'path': func.ST_AddPoint(
+                        OngoingTrip.path,
+                        func.ST_MakePoint(1,1)
+                    )
+                },
+                synchronize_session=False
+            )
         session.commit()
 
     def get_trips_that_passed_through_geo_rect(self, geo_rect):
         session = db.PSQLSession()
         box = WKTAdapter.convert_geo_rect_to_wkt(geo_rect)
-        query = session.query(Trip).filter(
-            Trip.path.intersects(box)
+        import ipdb; ipdb.set_trace()
+        query = session.query(OngoingTrip).filter(
+            OngoingTrip.path.intersects(box)
         )
         counts = query.count()
         session.commit()
@@ -78,26 +102,12 @@ class PostGISTripAnalyzer(object):
         return total_fare
 
 
-class PostGISTripAdapter(object):
+class Adapter(object):
 
     def __init__(self, wkt_adapter=WKTAdapter):
         self._wkt_adapter = wkt_adapter
 
-    def adapt(self, core_trip):
-        path = self._get_adapted_path(core_trip.path)
-        start_point = self._get_adapted_coordinate(core_trip.start_point)
-        end_point = self._get_adapted_coordinate(core_trip.end_point)
-        return Trip(
-            id=core_trip.id,
-            path=path,
-            start_time=core_trip.start_time,
-            end_time=core_trip.end_time,
-            fare=core_trip.fare,
-            start_point=start_point,
-            end_point=end_point,
-        )
-
-    def _get_adapted_coordinate(self, coordinate):
+    def get_adapted_coordinate(self, coordinate):
         wkt_value = self._wkt_adapter.convert_coordinate_to_wkt(
             coordinate
         )
@@ -106,26 +116,21 @@ class PostGISTripAdapter(object):
     def _prefix_with_srid(self, value):
         return "SRID=4326;%s" % value
 
-    def _get_adapted_path(self, path):
+    def get_adapted_path(self, path):
         wkt_value = self._wkt_adapter.convert_coordinates_to_linestring(
             path
         )
         return self._prefix_with_srid(wkt_value)
 
 
-class Trip(db.PostgresBase):
-    __tablename__ = 'trip'
+class OngoingTrip(db.PostgresBase):
+    __tablename__ = 'ongoing_trip'
 
     id = Column(Integer, primary_key=True)
     path = Column(
-        Geometry(geometry_type='LINESTRING', srid=4326, spatial_index=True)
+        Geometry(geometry_type='LINESTRING', srid=4326, spatial_index=False)
     )
     start_time = Column(DateTime)
-    end_time = Column(DateTime)
     start_point = Column(
-        Geometry(geometry_type='POINT', srid=4326, spatial_index=True)
+        Geometry(geometry_type='POINT', srid=4326, spatial_index=False)
     )
-    end_point = Column(
-        Geometry(geometry_type='POINT', srid=4326, spatial_index=True)
-    )
-    fare = Column(Integer)

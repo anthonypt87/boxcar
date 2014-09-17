@@ -4,7 +4,20 @@ from collections import namedtuple
 Coordinate = namedtuple('Coordinate', 'lat lng')
 
 
+class TripEventType(object):
+    UPDATE = 'update'
+    START = 'start'
+    END = 'end'
+
+
 TripEvent = namedtuple('TripEvent', 'id location time type')
+#class TripEvent(object):
+#
+#    def __init__(self, id, location, time, type):
+#        self.id = id
+#        self.location = location
+#        self.time = time
+#        self.type = type
 
 
 Trip = namedtuple('Trip', 'id path start_time end_time fare start_point end_point')

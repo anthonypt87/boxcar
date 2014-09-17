@@ -6,6 +6,7 @@ import dateutil.parser
 
 from boxcar.core import domain_objects
 from boxcar.trip_analyzers.postgis_trip_analyzer import PostGISTripAnalyzer
+from boxcar.ongoing_trip_analyzer import OngoingTripAnalyzer
 
 
 def get_tsv_loader(filename):
@@ -32,22 +33,27 @@ class UberDataLoader(object):
         with self._tsv_loader() as loader:
             previous_row_id = None
             rows = []
-            for row in loader:
+            for i, row in enumerate(loader):
+                if i % 500 == 0:
+                    print i
                 if previous_row_id is None:
                     previous_row_id = row['id']
-                if row['id'] != previous_row_id:
-                    self._add_trip_rows(rows)
-                    rows = []
-                    previous_row_id = row['id']
-                else:
+                if row['id'] == previous_row_id:
                     rows.append(row)
+                else:
+                    self._add_trip_rows(rows)
+                    rows = [row]
+                    previous_row_id = row['id']
             if rows:
                 self._add_trip_rows(rows)
 
+    k = 0
     def _add_trip_rows(self, rows):
-        if rows:
-            trip = self._create_trip_from_rows(rows)
-            self._trip_analyzer.add_trip(trip)
+        self.k += 1
+        trip = self._create_trip_from_rows(rows)
+        if self.k % 10 == 0:
+            print 'k %s' % self.k
+        self._trip_analyzer.add_trip(trip)
 
     def _create_trip_from_rows(self, rows):
         path = [
@@ -56,6 +62,9 @@ class UberDataLoader(object):
                 float(row['lng'])
             ) for row in rows
         ]
+        if len(path) == 1:
+            path.append(path[0])
+
         row_id = rows[0]['id']
         return domain_objects.Trip(
             id=int(row_id),
