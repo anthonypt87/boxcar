@@ -48,7 +48,6 @@ class OngoingTripAnalyzer(object):
     def get_trips_that_passed_through_geo_rect(self, geo_rect):
         session = db.PSQLSession()
         box = WKTAdapter.convert_geo_rect_to_wkt(geo_rect)
-        import ipdb; ipdb.set_trace()
         query = session.query(OngoingTrip).filter(
             OngoingTrip.path.intersects(box)
         )
