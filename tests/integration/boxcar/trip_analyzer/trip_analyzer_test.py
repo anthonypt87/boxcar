@@ -17,7 +17,7 @@ class TripAnalyzerTest(unittest.TestCase):
         redis_client.client.flushdb()
 
     def test_add_trip_event_and_count(self):
-        trip_event = test_util.TripEventFactory.create(location=geometry.Point(0, 0))
+        trip_event = test_util.TripEventFactory.create(point=geometry.Point(0, 0))
         self._trip_analyzer.add_trip_event_to_be_analyzed(
             trip_event
         )
@@ -26,6 +26,10 @@ class TripAnalyzerTest(unittest.TestCase):
             box
         )
         self.assertEqual(num_trips, 1)
+
+    def test_add_completed_trip_event_and_count(self):
+        trip_event = test_util.TripEventFactory.create(point=geometry.Point(0, 0))
+
 
 
 if __name__ == '__main__':

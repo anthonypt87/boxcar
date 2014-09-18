@@ -3,7 +3,7 @@ import unittest
 from shapely import geometry
 
 from boxcar import lib
-from tests import util
+from tests import test_util
 
 
 class GetMergedPathTest(unittest.TestCase):
@@ -12,7 +12,7 @@ class GetMergedPathTest(unittest.TestCase):
         point = geometry.Point(1, 2)
         path = geometry.LineString([(3, 4), (5, 6)])
 
-        util.assert_shapes_are_equal(
+        test_util.assert_shapes_are_equal(
             self,
             geometry.LineString([(3, 4), (5, 6), (1, 2)]),
             lib.get_merged_path(path, point)

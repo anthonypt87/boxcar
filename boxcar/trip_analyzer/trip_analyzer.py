@@ -31,7 +31,7 @@ class TripAnalyzer(object):
         )
         merged_path = lib.get_merged_path(
             ongoing_trip_info.path,
-            trip_event.location
+            trip_event.point
         )
         completed_trip = domain_objects.Trip(
             id=trip_event.id,
@@ -40,7 +40,7 @@ class TripAnalyzer(object):
             end_time=trip_event.time,
             fare=trip_event.fare,
             start_point=ongoing_trip_info.start_point,
-            end_point=trip_event.location
+            end_point=trip_event.point
         )
         self._completed_trip_analyzer.add_trip(completed_trip)
 

@@ -11,7 +11,7 @@ class OngoingTripAnalyzer(object):
     def add_trip_event_to_be_analyzed(self, trip_event):
         self._ongoing_trip_event_store.append_to_path(
             trip_event.id,
-            trip_event.location
+            trip_event.point
         )
 
     def get_trips_that_passed_through_box(self, box):
@@ -30,11 +30,11 @@ class OngoingTripEventStore(object):
 
     TRIP_KEY = 'trip'
 
-    def append_to_path(self, trip_id, location):
+    def append_to_path(self, trip_id, point):
         path_name = self._get_path_key(trip_id)
         redis_client.client.append(
             path_name,
-            '%s %s ' % (location.x, location.y)
+            '%s %s ' % (point.x, point.y)
         )
         redis_client.client.sadd(self.TRIP_KEY, trip_id)
 

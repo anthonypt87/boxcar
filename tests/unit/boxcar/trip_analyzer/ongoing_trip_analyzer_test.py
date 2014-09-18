@@ -20,7 +20,7 @@ class OngoingTripAnalyzerTest(unittest.TestCase):
         self._analyzer.add_trip_event_to_be_analyzed(trip_event)
         self._ongoing_trip_event_store.append_to_path.assert_called_once_with(
             trip_event.id,
-            trip_event.location
+            trip_event.point
         )
 
     def test_get_trips_that_passed_through_box_uses_store(self):

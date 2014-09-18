@@ -17,7 +17,7 @@ class OngoingTripAnalyzerTest(unittest.TestCase):
             ongoing_trip_analyzer.OngoingTripEventStore()
         )
         trip_event = test_util.TripEventFactory.create(
-            location=geometry.Point(0, 0)
+            point=geometry.Point(0, 0)
         )
         analyzer.add_trip_event_to_be_analyzed(trip_event)
         box = geometry.box(-1, -1, 1, 1)

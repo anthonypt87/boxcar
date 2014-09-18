@@ -45,7 +45,7 @@ class TripAnalyzerTest(unittest.TestCase):
     def tests_persists_update_when_job_is_completed(self):
         trip_event = test_util.TripEventFactory.create(
             event_type=domain_objects.TripEventType.END,
-            location=geometry.Point(5, 5),
+            point=geometry.Point(5, 5),
             fare=4
         )
 

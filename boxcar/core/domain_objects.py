@@ -7,12 +7,14 @@ class TripEventType(object):
     END = 'end'
 
 
-TripEvent = namedtuple('TripEvent', 'id location time type fare')
+TripEvent = namedtuple('TripEvent', 'id point time type fare')
+
 
 OngoingTrip = namedtuple(
     'Trip',
     'id path start_time start_point'
 )
+
 
 Trip = namedtuple(
     'Trip',
