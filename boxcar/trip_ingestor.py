@@ -1,5 +1,3 @@
-from geoalchemy2 import WKTElement
-
 from boxcar import lib
 from boxcar.core import db
 from boxcar.core import domain_objects
