@@ -2,10 +2,10 @@ import unittest
 
 from shapely import geometry
 
-from boxcar.trip_ingestor import CompletedTripIngestor
 from boxcar.core import db
 from boxcar.core import models
 from boxcar.trip_analyzer.completed_trip_analyzer import CompletedTripAnalyzer
+from boxcar.trip_ingestor import CompletedTripIngestor
 from tests import test_util
 
 

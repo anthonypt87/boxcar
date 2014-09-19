@@ -1,7 +1,8 @@
 from geoalchemy2 import WKTElement
-from boxcar.core import domain_objects
+
 from boxcar import lib
 from boxcar.core import db
+from boxcar.core import domain_objects
 from boxcar.core.models import TripModel
 from boxcar.ongoing_trip_store import OngoingTripStore
 
@@ -74,16 +75,13 @@ class CompletedTripIngestor(object):
     def _convert_trip_to_trip_model(self, trip):
         return TripModel(
             id=trip.id,
-            path=self._convert_to_wkt_element(trip.path),
+            path=lib.convert_shape_to_wkt_element(trip.path),
             start_time=trip.start_time,
             end_time=trip.end_time,
             fare=trip.fare,
-            start_point=self._convert_to_wkt_element(trip.start_point),
-            end_point=self._convert_to_wkt_element(trip.end_point),
+            start_point=lib.convert_shape_to_wkt_element(trip.start_point),
+            end_point=lib.convert_shape_to_wkt_element(trip.end_point),
         )
-
-    def _convert_to_wkt_element(self, shape):
-        return WKTElement(shape.wkt, srid=4326)
 
 
 class OngoingTripIngestor(object):

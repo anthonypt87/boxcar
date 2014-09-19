@@ -1,16 +1,13 @@
-from geoalchemy2 import WKTElement
 from geoalchemy2 import functions
 from sqlalchemy import or_
 from sqlalchemy import func
 
 from boxcar.core import db
 from boxcar.core.models import TripModel
+from boxcar import lib
 
 
 class CompletedTripAnalyzer(object):
-
-    def _convert_to_wkt_element(self, shape):
-        return WKTElement(shape.wkt, srid=4326)
 
     def get_trips_that_passed_through_box(self, box):
         with db.session_manager() as session:
@@ -34,7 +31,7 @@ class CompletedTripAnalyzer(object):
         session,
         box
     ):
-        wkt_box = self._convert_to_wkt_element(box)
+        wkt_box = lib.convert_shape_to_wkt_element(box)
         return session.query(column).filter(
             or_(
                 functions.ST_Intersects(
