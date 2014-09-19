@@ -5,8 +5,6 @@ import mock
 from shapely import geometry
 
 from boxcar.trip_analyzer import ongoing_trip_analyzer
-from boxcar.core import domain_objects
-from tests import test_util
 
 
 class OngoingTripAnalyzerTest(unittest.TestCase):
@@ -16,35 +14,6 @@ class OngoingTripAnalyzerTest(unittest.TestCase):
         self._analyzer = ongoing_trip_analyzer.OngoingTripAnalyzer(
             self._ongoing_trip_event_store
         )
-
-    def test_add_trip_event_to_be_analyzed_adds_info_if_start(self):
-        trip_event = test_util.TripEventFactory.create(
-            type=domain_objects.TripEventType.START
-        )
-        self._analyzer.add_trip_event_to_be_analyzed(trip_event)
-        self._ongoing_trip_event_store.add_trip_info.\
-            assert_called_once_with(
-                trip_event.id,
-                trip_event.point,
-                trip_event.time
-            )
-        self._assert_append_to_path_called_correctly(trip_event)
-
-    def _assert_append_to_path_called_correctly(self, trip_event):
-        self._ongoing_trip_event_store.append_to_path.assert_called_once_with(
-            trip_event.id,
-            trip_event.point
-        )
-
-    def test_add_trip_event_to_be_analyzed_appends_to_path(self):
-        trip_event = test_util.TripEventFactory.create(
-            type=domain_objects.TripEventType.UPDATE
-        )
-        self._analyzer.add_trip_event_to_be_analyzed(trip_event)
-        self.assertFalse(
-            self._ongoing_trip_event_store.add_trip_info.called
-        )
-        self._assert_append_to_path_called_correctly(trip_event)
 
     def test_get_trips_that_passed_through_box_uses_store(self):
         box = geometry.box(-1, -1, 1, 1)

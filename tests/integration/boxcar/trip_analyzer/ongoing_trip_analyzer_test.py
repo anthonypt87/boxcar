@@ -8,12 +8,14 @@ from boxcar.core import domain_objects
 from boxcar.trip_analyzer import ongoing_trip_analyzer
 from boxcar import ongoing_trip_event_store
 from tests import test_util
+from boxcar.trip_ingestor import create_trip_ingestor
 
 
 class OngoingTripAnalyzerTest(unittest.TestCase):
 
     def setUp(self):
         redis_client.client.flushdb()
+        self._trip_ingestor = create_trip_ingestor()
         self._analyzer = ongoing_trip_analyzer.OngoingTripAnalyzer(
             ongoing_trip_event_store.OngoingTripEventStore()
         )
@@ -43,7 +45,7 @@ class OngoingTripAnalyzerTest(unittest.TestCase):
             point=geometry.Point(lat_lng),
             type=event_type
         )
-        self._analyzer.add_trip_event_to_be_analyzed(trip_event)
+        self._trip_ingestor.add_trip_event_to_be_analyzed(trip_event)
 
     def test_trips_that_started_or_stopped_at_box(self):
         # Add trip that wont intersect
