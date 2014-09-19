@@ -51,9 +51,27 @@ class OngoingTripAnalyzer(object):
     def get_get_trips_at_time(self, time):
         return
 
+    def get_ongoing_trip_info(self, trip_id):
+        # TODO: Cleanup
+        trip_id_to_path_map = \
+            self._ongoing_trip_event_store.get_trip_id_to_paths()
+        path = trip_id_to_path_map[trip_id]
+        return domain_objects.OngoingTrip(
+            id=trip_id,
+            path=path,
+            **self._ongoing_trip_event_store.get_all_trip_info()[trip_id]
+        )
+
+    def wipe_all_info(self, trip_id):
+        redis_client.client.delete(
+            'trip:%s:trip_info' % trip_id,
+            'trip:%s:path' % trip_id
+        )
+        redis_client.client.srem('trip', trip_id)
+
 
 class OngoingTripEventStore(object):
-    # DRY
+    # DRY and break off serialization and deserialization into another class.
 
     def add_trip_info(self, trip_id, start_point, start_time):
         trip_info_key = self._get_trip_info_key(trip_id)
@@ -91,6 +109,8 @@ class OngoingTripEventStore(object):
 
     def get_trip_id_to_paths(self):
         trip_ids = self._get_all_trip_ids()
+        if not trip_ids:
+            return {}
 
         path_names = [
             self._get_path_key(trip_id) for trip_id in trip_ids
@@ -126,6 +146,10 @@ class OngoingTripEventStore(object):
 
     def get_all_trip_info(self):
         trip_ids = self._get_all_trip_ids()
+
+        if not trip_ids:
+            return {}
+
         trip_info_keys = [
             self._get_trip_info_key(trip_id) for trip_id in trip_ids
         ]
