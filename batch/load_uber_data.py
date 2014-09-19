@@ -1,7 +1,6 @@
 import argparse
 import contextlib
 import csv
-import datetime
 
 import dateutil.parser
 
@@ -18,7 +17,7 @@ def get_tsv_loader(filename):
         with open(filename) as csv_file:
             yield csv.DictReader(
                 csv_file,
-                fieldnames=['id', 'time', 'lat', 'lng'],
+                fieldnames=['id', 'time', 'lat', 'lng', 'type'],
                 delimiter='\t'
             )
     return _inner
@@ -34,9 +33,13 @@ class UberDataLoader(object):
 
     def load_uber_data(self):
         with self._tsv_loader() as loader:
-            for row in loader:
+            for i, row in enumerate(loader):
+                if i % 500 == 0:
+                    print i
                 trip_event = self._create_trip_event_from_row(row)
-                self._trip_ingestor.add_trip_event_to_be_analyzed(trip_event)
+                self._trip_ingestor.add_trip_event_to_be_analyzed(
+                    trip_event
+                )
 
     def _create_trip_event_from_row(self, row):
         point = geometry.Point(float(row['lat']), float(row['lng']))
@@ -62,6 +65,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ingestor = create_trip_ingestor()
-    tsv_loader = get_tsv_loader(args.uber_path)
+    tsv_loader = get_tsv_loader(args.filename)
 
     UberDataLoader(ingestor, tsv_loader).load_uber_data()
