@@ -25,18 +25,55 @@ class OngoingTripAnalyzer(object):
 
         return number_of_intersecting_paths
 
+    def get_trips_started_or_stopped_in_box(self, box):
+        id_to_trip_info_map = self._ongoing_trip_event_store.get_all_trip_info(
+            box
+        )
+        # We only handle trips that started in box because ongoing trips by
+        # definition don't have an end point.
+        num_trips_that_started_in_box = 0
+        for trip_info in id_to_trip_info_map.values():
+            if box.intersects(trip_info['start_point']):
+                num_trips_that_started_in_box += 1
+
+        return num_trips_that_started_in_box
+
+    def get_fares_in_started_or_stopped_in_box(self, box):
+        return 0
+
+    def get_get_trips_at_time(self, time):
+        return
+
 
 class OngoingTripEventStore(object):
 
-    TRIP_KEY = 'trip'
+    def add_trip_info(self, trip_id, start_point, start_time):
+        trip_info_key = 'trip:%s' % trip_id
+        redis_client.client.hset(
+            trip_info_key,
+            {
+                'start_point': self._serialize_point(start_point)
+                'start_time': start_point
+            }
+        )
+        self._add_trip_id(trip_id)
+
+    def _serialize_point(self, point):
+        return '%s %s' % (point.x, point.y)
+
+    def _serialize_datetime(self, unserialized):
+        return '%s'
+
+    def _add_trip_id(self, trip_id):
+        redis_client.client.sadd(self.TRIP_KEY, trip_id)
 
     def append_to_path(self, trip_id, point):
         path_name = self._get_path_key(trip_id)
         redis_client.client.append(
             path_name,
-            '%s %s ' % (point.x, point.y)
+            '%s ' % (self._serialize_point(point))
         )
-        redis_client.client.sadd(self.TRIP_KEY, trip_id)
+        self._add_trip_id(trip_id)
 
     def _get_path_key(self, trip_id):
         return 'trip:%s:path' % trip_id

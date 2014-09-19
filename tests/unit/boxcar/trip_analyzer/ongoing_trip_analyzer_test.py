@@ -1,3 +1,4 @@
+import datetime
 import unittest
 
 import mock
@@ -33,6 +34,19 @@ class OngoingTripAnalyzerTest(unittest.TestCase):
         }
         self.assertEqual(
             self._analyzer.get_trips_that_passed_through_box(box),
+            1
+        )
+
+    def test_get_trips_that_started_or_stopped_in_box(self):
+        self._ongoing_trip_event_store.get_all_trip_info.return_value = {
+            1: {
+                'time': datetime.datetime(2014, 1, 1),
+                'start_point': geometry.Point(0, 0)
+            }
+        }
+        box = geometry.box(-1, -1, 1, 1)
+        self.assertEqual(
+            self._analyzer.get_trips_started_or_stopped_in_box(box),
             1
         )
 

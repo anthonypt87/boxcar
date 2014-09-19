@@ -7,16 +7,22 @@ from boxcar.core import domain_objects
 
 class TripEventFactory(object):
 
+    DEFAULT_POINT = geometry.Point(3, 3)
+    DEFAULT_ID = 33
+    DEFAULT_FARE = 0
+    DEFAULT_EVENT_TYPE = domain_objects.TripEventType.START
+
+
     @classmethod
     def create(
         cls,
-        point=None,
-        event_type=domain_objects.TripEventType.START,
-        fare=0
+        id=DEFAULT_ID,
+        point=DEFAULT_POINT,
+        event_type=DEFAULT_EVENT_TYPE,
+        fare=DEFAULT_FARE
     ):
-        point = point or geometry.Point(3, 3)
         return domain_objects.TripEvent(
-            id=33,
+            id=id,
             point=point,
             time=datetime.datetime(2014, 2, 2),
             type=event_type,
