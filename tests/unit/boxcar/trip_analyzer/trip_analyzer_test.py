@@ -29,7 +29,7 @@ class TripAnalyzerTest(unittest.TestCase):
             )
 
     def _submit_trip_event_with_type(self, event_type):
-        trip_event = test_util.TripEventFactory.create(event_type=event_type)
+        trip_event = test_util.TripEventFactory.create(type=event_type)
         self._trip_analyzer.add_trip_event_to_be_analyzed(trip_event)
         return trip_event
 
@@ -42,9 +42,11 @@ class TripAnalyzerTest(unittest.TestCase):
                 trip_event
             )
 
-    def tests_persists_update_when_job_is_completed(self):
+    def tests_persists_update_when_job_is_completed_and_wipes_ongoing_row(
+        self
+    ):
         trip_event = test_util.TripEventFactory.create(
-            event_type=domain_objects.TripEventType.END,
+            type=domain_objects.TripEventType.END,
             point=geometry.Point(5, 5),
             fare=4
         )
@@ -74,9 +76,15 @@ class TripAnalyzerTest(unittest.TestCase):
         trip = args[0]
         test_util.assert_trips_are_the_same(self, expected_full_trip, trip)
 
+        self._ongoing_trip_analyzer.wipe_all_info.assert_called_once_with(
+            trip_event.id
+        )
+
     def tests_get_trips_that_passed_through_box_sums_results(self):
-        self._ongoing_trip_analyzer.get_trips_that_passed_through_box.return_value = 1
-        self._completed_trip_analyzer.get_trips_that_passed_through_box.return_value = 2
+        self._ongoing_trip_analyzer.get_trips_that_passed_through_box.\
+            return_value = 1
+        self._completed_trip_analyzer.get_trips_that_passed_through_box.\
+            return_value = 2
         box = geometry.box(-1, 0, 2, 4)
         self.assertEqual(
             self._trip_analyzer.get_trips_that_passed_through_box(box),

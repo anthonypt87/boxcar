@@ -24,6 +24,7 @@ class TripAnalyzer(object):
             )
         elif trip_event.type == domain_objects.TripEventType.END:
             self._add_completed_event(trip_event)
+            self._ongoing_trip_analyzer.wipe_all_info(trip_event.id)
 
     def _add_completed_event(self, trip_event):
         ongoing_trip_info = self._ongoing_trip_analyzer.get_ongoing_trip_info(

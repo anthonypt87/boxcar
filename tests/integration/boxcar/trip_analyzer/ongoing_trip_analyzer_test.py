@@ -4,6 +4,7 @@ import unittest
 from shapely import geometry
 
 from boxcar.core import redis_client
+from boxcar.core import domain_objects
 from boxcar.trip_analyzer import ongoing_trip_analyzer
 from tests import test_util
 
@@ -23,12 +24,25 @@ class OngoingTripAnalyzerTest(unittest.TestCase):
         self.assertEqual(num_trips, 1)
 
     def _create_and_add_events_for_id(self, _id, lat_lngs):
-        for lat_lng in lat_lngs:
-            trip_event = test_util.TripEventFactory.create(
-                id=_id,
-                point=geometry.Point(lat_lng)
+        self._add_trip_to_be_analyzed(
+            _id,
+            lat_lngs[0],
+            event_type=domain_objects.TripEventType.START
+        )
+        for lat_lng in lat_lngs[1:]:
+            self._add_trip_to_be_analyzed(
+                _id,
+                lat_lng,
+                event_type=domain_objects.TripEventType.UPDATE
             )
-            self._analyzer.add_trip_event_to_be_analyzed(trip_event)
+
+    def _add_trip_to_be_analyzed(self, _id, lat_lng, event_type):
+        trip_event = test_util.TripEventFactory.create(
+            id=_id,
+            point=geometry.Point(lat_lng),
+            type=event_type
+        )
+        self._analyzer.add_trip_event_to_be_analyzed(trip_event)
 
     def test_trips_that_started_or_stopped_at_box(self):
         # Add trip that wont intersect
@@ -84,11 +98,15 @@ class OngoingTripEventStoreTest(unittest.TestCase):
         trip_time = datetime.datetime(2014, 1, 1)
         self._store.add_trip_info(trip_id, point, trip_time)
 
-        id_to_trip_info = self.self._store.get_all_trip_info()
+        id_to_trip_info = self._store.get_all_trip_info()
         trip_info = id_to_trip_info[trip_id]
 
-        test_util.assert_shapes_are_equal(trip_info['start_point'], point)
-        self.assert_equal(trip_info['start_time'], trip_time)
+        test_util.assert_shapes_are_equal(
+            self,
+            trip_info['start_point'],
+            point
+        )
+        self.assertEqual(trip_info['start_time'], trip_time)
 
 
 if __name__ == '__main__':

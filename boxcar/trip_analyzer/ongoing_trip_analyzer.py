@@ -1,6 +1,8 @@
+import dateutil.parser
 from shapely import geometry
 
 from boxcar.core import redis_client
+from boxcar.core import domain_objects
 
 
 class OngoingTripAnalyzer(object):
@@ -9,6 +11,12 @@ class OngoingTripAnalyzer(object):
         self._ongoing_trip_event_store = ongoing_trip_event_store
 
     def add_trip_event_to_be_analyzed(self, trip_event):
+        if trip_event.type == domain_objects.TripEventType.START:
+            self._ongoing_trip_event_store.add_trip_info(
+                trip_event.id,
+                trip_event.point,
+                trip_event.time,
+            )
         self._ongoing_trip_event_store.append_to_path(
             trip_event.id,
             trip_event.point
@@ -26,9 +34,8 @@ class OngoingTripAnalyzer(object):
         return number_of_intersecting_paths
 
     def get_trips_started_or_stopped_in_box(self, box):
-        id_to_trip_info_map = self._ongoing_trip_event_store.get_all_trip_info(
-            box
-        )
+        id_to_trip_info_map = \
+            self._ongoing_trip_event_store.get_all_trip_info()
         # We only handle trips that started in box because ongoing trips by
         # definition don't have an end point.
         num_trips_that_started_in_box = 0
@@ -46,32 +53,36 @@ class OngoingTripAnalyzer(object):
 
 
 class OngoingTripEventStore(object):
+    # DRY
 
     def add_trip_info(self, trip_id, start_point, start_time):
-        trip_info_key = 'trip:%s' % trip_id
-        redis_client.client.hset(
+        trip_info_key = self._get_trip_info_key(trip_id)
+        redis_client.client.set(
             trip_info_key,
-            {
-                'start_point': self._serialize_point(start_point)
-                'start_time': start_point
-            }
+            '%s|%s' % (
+                self._serialize_point(start_point),
+                self._serialize_datetime(start_time)
+            )
         )
         self._add_trip_id(trip_id)
 
-    def _serialize_point(self, point):
-        return '%s %s' % (point.x, point.y)
+    def _get_trip_info_key(self, trip_id):
+        return 'trip:%s:trip_info' % trip_id
 
-    def _serialize_datetime(self, unserialized):
-        return '%s'
+    def _serialize_point(self, point):
+        return '%s %s ' % (point.x, point.y)
+
+    def _serialize_datetime(self, unserialized_datetime):
+        return unserialized_datetime.isoformat()
 
     def _add_trip_id(self, trip_id):
-        redis_client.client.sadd(self.TRIP_KEY, trip_id)
+        redis_client.client.sadd('trip', trip_id)
 
     def append_to_path(self, trip_id, point):
         path_name = self._get_path_key(trip_id)
         redis_client.client.append(
             path_name,
-            '%s ' % (self._serialize_point(point))
+            '%s' % (self._serialize_point(point))
         )
         self._add_trip_id(trip_id)
 
@@ -87,9 +98,9 @@ class OngoingTripEventStore(object):
         raw_path_strings = redis_client.client.mget(path_names)
 
         trip_id_to_paths = {}
-        for trip_id, raw_path_strings in zip(trip_ids, raw_path_strings):
+        for trip_id, raw_path_string in zip(trip_ids, raw_path_strings):
             trip_id_to_paths[trip_id] = self._adapt_raw_points_to_shapes(
-                raw_path_strings
+                raw_path_string
             )
         return trip_id_to_paths
 
@@ -112,3 +123,24 @@ class OngoingTripEventStore(object):
         return [
             items[i:i + chunk_size] for i in xrange(0, len(items), chunk_size)
         ]
+
+    def get_all_trip_info(self):
+        trip_ids = self._get_all_trip_ids()
+        trip_info_keys = [
+            self._get_trip_info_key(trip_id) for trip_id in trip_ids
+        ]
+        raw_trip_infos = redis_client.client.mget(trip_info_keys)
+
+        trip_id_to_trip_info = {}
+        for trip_id, raw_trip_info in zip(trip_ids, raw_trip_infos):
+            trip_id_to_trip_info[trip_id] = self._deserialize_trip_info(
+                raw_trip_info
+            )
+        return trip_id_to_trip_info
+
+    def _deserialize_trip_info(self, raw_trip_info):
+        raw_point, raw_datetime = raw_trip_info.split('|')
+        return {
+            'start_point': self._adapt_raw_points_to_shapes(raw_point),
+            'start_time': dateutil.parser.parse(raw_datetime)
+        }

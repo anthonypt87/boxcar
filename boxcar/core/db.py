@@ -18,8 +18,9 @@ Session = sessionmaker(bind=engine)
 def session_manager():
     try:
         session = Session()
-        yield
+        yield session
     except Exception:
         session.rollback()
+        raise
     else:
         session.commit()

@@ -1,1 +1,1 @@
-nosetests -e experiments --rednose -e completed
+nosetests -e experiments --rednose 
