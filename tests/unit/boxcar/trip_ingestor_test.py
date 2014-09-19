@@ -84,7 +84,7 @@ class TripIngestorTest(unittest.TestCase):
         )
 
 
-class OngoingTripAnalyzerTest(object):
+class OngoingTripAnalyzerTest(unittest.TestCase):
 
     def setUp(self):
         self._ongoing_trip_event_store = mock.Mock()
