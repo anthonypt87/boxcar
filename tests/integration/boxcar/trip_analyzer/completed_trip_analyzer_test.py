@@ -2,6 +2,7 @@ import unittest
 
 from shapely import geometry
 
+from boxcar.trip_ingestor import CompletedTripIngestor
 from boxcar.core import db
 from boxcar.core import models
 from boxcar.trip_analyzer.completed_trip_analyzer import CompletedTripAnalyzer
@@ -14,6 +15,7 @@ class CompletedTripAnalyzerIntegrationTest(unittest.TestCase):
         with db.session_manager() as session:
             session.query(models.TripModel).delete()
         self._analyzer = CompletedTripAnalyzer()
+        self._completed_trip_ingestor = CompletedTripIngestor()
 
     def test_trips_that_passed_through_box(self):
         lat_lngs = [(1, 1), (4, 4)]
@@ -27,7 +29,7 @@ class CompletedTripAnalyzerIntegrationTest(unittest.TestCase):
             lat_lngs,
             **kwargs
         )
-        self._analyzer.add_trip(trip)
+        self._completed_trip_ingestor.add_trip(trip)
 
     def test_trips_that_started_or_stopped_at_box(self):
         lat_lngs = [(0, 5), (0, 0), (10, 0), (10, 5)]

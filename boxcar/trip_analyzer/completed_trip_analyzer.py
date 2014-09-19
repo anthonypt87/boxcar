@@ -9,22 +9,6 @@ from boxcar.core.models import TripModel
 
 class CompletedTripAnalyzer(object):
 
-    def add_trip(self, trip):
-        trip_model = self._convert_trip_to_trip_model(trip)
-        with db.session_manager() as session:
-            session.add(trip_model)
-
-    def _convert_trip_to_trip_model(self, trip):
-        return TripModel(
-            id=trip.id,
-            path=self._convert_to_wkt_element(trip.path),
-            start_time=trip.start_time,
-            end_time=trip.end_time,
-            fare=trip.fare,
-            start_point=self._convert_to_wkt_element(trip.start_point),
-            end_point=self._convert_to_wkt_element(trip.end_point),
-        )
-
     def _convert_to_wkt_element(self, shape):
         return WKTElement(shape.wkt, srid=4326)
 
