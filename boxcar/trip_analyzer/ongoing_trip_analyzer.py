@@ -1,22 +1,7 @@
-from boxcar.core import domain_objects
-
-
 class OngoingTripAnalyzer(object):
 
     def __init__(self, ongoing_trip_event_store):
         self._ongoing_trip_event_store = ongoing_trip_event_store
-
-    def add_trip_event_to_be_analyzed(self, trip_event):
-        if trip_event.type == domain_objects.TripEventType.START:
-            self._ongoing_trip_event_store.add_trip_info(
-                trip_event.id,
-                trip_event.point,
-                trip_event.time,
-            )
-        self._ongoing_trip_event_store.append_to_path(
-            trip_event.id,
-            trip_event.point
-        )
 
     def get_trips_that_passed_through_box(self, box):
         trip_id_path_map = \
