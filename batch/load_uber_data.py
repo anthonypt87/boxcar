@@ -1,12 +1,15 @@
 import argparse
 import contextlib
 import csv
+import datetime
 
 import dateutil.parser
 
 from boxcar.core import domain_objects
-from boxcar.trip_analyzers.postgis_trip_analyzer import PostGISTripAnalyzer
-from boxcar.ongoing_trip_analyzer import OngoingTripAnalyzer
+from boxcar.trip_ingestor import create_trip_ingestor
+from shapely import geometry
+from shapely import speedups
+speedups.enable()
 
 
 def get_tsv_loader(filename):
@@ -25,66 +28,40 @@ class UberDataLoader(object):
 
     DEFAULT_FARE = 10
 
-    def __init__(self, trip_analyzer, tsv_loader):
-        self._trip_analyzer = trip_analyzer
+    def __init__(self, trip_ingestor, tsv_loader):
+        self._trip_ingestor = trip_ingestor
         self._tsv_loader = tsv_loader
 
     def load_uber_data(self):
         with self._tsv_loader() as loader:
-            previous_row_id = None
-            rows = []
-            for i, row in enumerate(loader):
-                if i % 500 == 0:
-                    print i
-                if previous_row_id is None:
-                    previous_row_id = row['id']
-                if row['id'] == previous_row_id:
-                    rows.append(row)
-                else:
-                    self._add_trip_rows(rows)
-                    rows = [row]
-                    previous_row_id = row['id']
-            if rows:
-                self._add_trip_rows(rows)
+            for row in loader:
+                trip_event = self._create_trip_event_from_row(row)
+                self._trip_ingestor.add_trip_event_to_be_analyzed(trip_event)
 
-    k = 0
-    def _add_trip_rows(self, rows):
-        self.k += 1
-        trip = self._create_trip_from_rows(rows)
-        if self.k % 10 == 0:
-            print 'k %s' % self.k
-        self._trip_analyzer.add_trip(trip)
+    def _create_trip_event_from_row(self, row):
+        point = geometry.Point(float(row['lat']), float(row['lng']))
+        if row['type'] == domain_objects.TripEventType.END:
+            fare = self.DEFAULT_FARE
+        else:
+            fare = 0
 
-    def _create_trip_from_rows(self, rows):
-        path = [
-            domain_objects.Coordinate(
-                float(row['lat']),
-                float(row['lng'])
-            ) for row in rows
-        ]
-        if len(path) == 1:
-            path.append(path[0])
-
-        row_id = rows[0]['id']
-        return domain_objects.Trip(
-            id=int(row_id),
-            path=path,
-            start_time=dateutil.parser.parse(rows[0]['time']),
-            end_time=dateutil.parser.parse(rows[-1]['time']),
-            fare=self.DEFAULT_FARE,
-            start_point=path[0],
-            end_point=path[-1]
+        return domain_objects.TripEvent(
+            id=int(row['id']),
+            point=point,
+            time=dateutil.parser.parse(row['time']),
+            type=row['type'],
+            fare=fare
         )
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Dump uber tsv file to trip analyzer.'
+        description='Dump uber tsv file to trip ingestor.'
     )
-    parser.add_argument('uber_path')
+    parser.add_argument('filename')
     args = parser.parse_args()
 
-    analyzer = PostGISTripAnalyzer()
+    ingestor = create_trip_ingestor()
     tsv_loader = get_tsv_loader(args.uber_path)
 
-    UberDataLoader(analyzer, tsv_loader).load_uber_data()
+    UberDataLoader(ingestor, tsv_loader).load_uber_data()
