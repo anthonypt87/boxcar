@@ -1,11 +1,11 @@
 class OngoingTripAnalyzer(object):
 
-    def __init__(self, ongoing_trip_event_store):
-        self._ongoing_trip_event_store = ongoing_trip_event_store
+    def __init__(self, ongoing_trip_store):
+        self._ongoing_trip_store = ongoing_trip_store
 
     def get_trips_that_passed_through_box(self, box):
         trip_id_path_map = \
-            self._ongoing_trip_event_store.get_trip_id_to_paths()
+            self._ongoing_trip_store.get_trip_id_to_paths()
 
         number_of_intersecting_paths = 0
         for path in trip_id_path_map.values():
@@ -16,7 +16,7 @@ class OngoingTripAnalyzer(object):
 
     def get_trips_started_or_stopped_in_box(self, box):
         id_to_trip_info_map = \
-            self._ongoing_trip_event_store.get_all_trip_info()
+            self._ongoing_trip_store.get_all_trip_info()
         # We only handle trips that started in box because ongoing trips by
         # definition don't have an end point.
         num_trips_that_started_in_box = 0

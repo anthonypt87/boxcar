@@ -5,7 +5,7 @@ from shapely import geometry
 from boxcar.core import redis_client
 from boxcar.core import domain_objects
 from boxcar.trip_analyzer import ongoing_trip_analyzer
-from boxcar import ongoing_trip_event_store
+from boxcar import ongoing_trip_store
 from tests import test_util
 from boxcar.trip_ingestor import create_trip_ingestor
 
@@ -16,7 +16,7 @@ class OngoingTripAnalyzerTest(unittest.TestCase):
         redis_client.client.flushdb()
         self._trip_ingestor = create_trip_ingestor()
         self._analyzer = ongoing_trip_analyzer.OngoingTripAnalyzer(
-            ongoing_trip_event_store.OngoingTripEventStore()
+            ongoing_trip_store.OngoingTripStore()
         )
 
     def test_adding_trip_event_and_checking_if_it_shows_up_in_box(self):

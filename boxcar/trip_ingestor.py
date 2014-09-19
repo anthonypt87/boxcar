@@ -3,17 +3,17 @@ from boxcar.core import domain_objects
 from boxcar import lib
 from boxcar.core import db
 from boxcar.core.models import TripModel
-from boxcar.ongoing_trip_event_store import OngoingTripEventStore
+from boxcar.ongoing_trip_store import OngoingTripStore
 
 
 def create_trip_ingestor():
-    ongoing_trip_event_store = OngoingTripEventStore()
-    ongoing_trip_ingestor = OngoingTripIngestor(ongoing_trip_event_store)
+    ongoing_trip_store = OngoingTripStore()
+    ongoing_trip_ingestor = OngoingTripIngestor(ongoing_trip_store)
     completed_trip_ingestor = CompletedTripIngestor()
     return TripIngestor(
         ongoing_trip_ingestor,
         completed_trip_ingestor,
-        ongoing_trip_event_store
+        ongoing_trip_store
     )
 
 
@@ -28,10 +28,10 @@ class TripIngestor(object):
         self,
         ongoing_trip_ingestor,
         completed_trip_ingestor,
-        ongoing_trip_event_store
+        ongoing_trip_store
     ):
         self._ongoing_trip_ingestor = ongoing_trip_ingestor
-        self._ongoing_trip_event_store = ongoing_trip_event_store
+        self._ongoing_trip_store = ongoing_trip_store
         self._completed_trip_ingestor = completed_trip_ingestor
 
     def add_trip_event_to_be_analyzed(self, trip_event):
@@ -41,11 +41,11 @@ class TripIngestor(object):
             )
         elif trip_event.type == domain_objects.TripEventType.END:
             self._add_completed_event(trip_event)
-            self._ongoing_trip_event_store.wipe_all_info(trip_event.id)
+            self._ongoing_trip_store.wipe_all_info(trip_event.id)
 
     def _add_completed_event(self, trip_event):
         ongoing_trip_info = \
-            self._ongoing_trip_event_store.get_ongoing_trip_info(
+            self._ongoing_trip_store.get_ongoing_trip_info(
                 trip_event.id
             )
         merged_path = lib.get_merged_path(
@@ -88,17 +88,17 @@ class CompletedTripIngestor(object):
 
 class OngoingTripIngestor(object):
 
-    def __init__(self, ongoing_trip_event_store):
-        self._ongoing_trip_event_store = ongoing_trip_event_store
+    def __init__(self, ongoing_trip_store):
+        self._ongoing_trip_store = ongoing_trip_store
 
     def add_trip_event_to_be_analyzed(self, trip_event):
         if trip_event.type == domain_objects.TripEventType.START:
-            self._ongoing_trip_event_store.add_trip_info(
+            self._ongoing_trip_store.add_trip_info(
                 trip_event.id,
                 trip_event.point,
                 trip_event.time,
             )
-        self._ongoing_trip_event_store.append_to_path(
+        self._ongoing_trip_store.append_to_path(
             trip_event.id,
             trip_event.point
         )

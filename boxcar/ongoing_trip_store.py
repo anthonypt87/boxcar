@@ -5,7 +5,7 @@ from boxcar.core import domain_objects
 from boxcar.core import redis_client
 
 
-class OngoingTripEventStore(object):
+class OngoingTripStore(object):
     # DRY and break off serialization and deserialization into another class.
 
     def wipe_all_info(self, trip_id):

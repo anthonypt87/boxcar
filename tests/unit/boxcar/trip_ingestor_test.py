@@ -13,13 +13,13 @@ from tests import test_util
 class TripIngestorTest(unittest.TestCase):
 
     def setUp(self):
-        self._ongoing_trip_event_store = mock.Mock()
+        self._ongoing_trip_store = mock.Mock()
         self._ongoing_trip_ingestor = mock.Mock()
         self._completed_trip_ingestor = mock.Mock()
         self._trip_ingestor = TripIngestor(
             self._ongoing_trip_ingestor,
             self._completed_trip_ingestor,
-            self._ongoing_trip_event_store,
+            self._ongoing_trip_store,
         )
 
     def test_add_trip_start_adds_to_ongoing_trip_ingestor(self):
@@ -60,7 +60,7 @@ class TripIngestorTest(unittest.TestCase):
             start_time=datetime.datetime(2014, 1, 2),
             start_point=geometry.Point([4, 5])
         )
-        self._ongoing_trip_event_store.get_ongoing_trip_info.return_value = \
+        self._ongoing_trip_store.get_ongoing_trip_info.return_value = \
             partial_trip
 
         self._trip_ingestor.add_trip_event_to_be_analyzed(trip_event)
@@ -79,7 +79,7 @@ class TripIngestorTest(unittest.TestCase):
         trip = args[0]
         test_util.assert_trips_are_the_same(self, expected_full_trip, trip)
 
-        self._ongoing_trip_event_store.wipe_all_info.assert_called_once_with(
+        self._ongoing_trip_store.wipe_all_info.assert_called_once_with(
             trip_event.id
         )
 
@@ -87,9 +87,9 @@ class TripIngestorTest(unittest.TestCase):
 class OngoingTripAnalyzerTest(unittest.TestCase):
 
     def setUp(self):
-        self._ongoing_trip_event_store = mock.Mock()
+        self._ongoing_trip_store = mock.Mock()
         self._ongoing_trip_ingestor = OngoingTripIngestor(
-            self._ongoing_trip_event_store
+            self._ongoing_trip_store
         )
 
     def test_add_trip_event_to_be_analyzed_adds_info_if_start(self):
@@ -97,7 +97,7 @@ class OngoingTripAnalyzerTest(unittest.TestCase):
             type=domain_objects.TripEventType.START
         )
         self._ongoing_trip_ingestor.add_trip_event_to_be_analyzed(trip_event)
-        self._ongoing_trip_event_store.add_trip_info.\
+        self._ongoing_trip_store.add_trip_info.\
             assert_called_once_with(
                 trip_event.id,
                 trip_event.point,
@@ -106,7 +106,7 @@ class OngoingTripAnalyzerTest(unittest.TestCase):
         self._assert_append_to_path_called_correctly(trip_event)
 
     def _assert_append_to_path_called_correctly(self, trip_event):
-        self._ongoing_trip_event_store.append_to_path.assert_called_once_with(
+        self._ongoing_trip_store.append_to_path.assert_called_once_with(
             trip_event.id,
             trip_event.point
         )
@@ -117,7 +117,7 @@ class OngoingTripAnalyzerTest(unittest.TestCase):
         )
         self._ongoing_trip_ingestor.add_trip_event_to_be_analyzed(trip_event)
         self.assertFalse(
-            self._ongoing_trip_event_store.add_trip_info.called
+            self._ongoing_trip_store.add_trip_info.called
         )
         self._assert_append_to_path_called_correctly(trip_event)
 

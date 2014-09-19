@@ -2,16 +2,16 @@ import datetime
 import unittest
 
 from shapely import geometry
-from boxcar import ongoing_trip_event_store
+from boxcar import ongoing_trip_store
 from boxcar.core import redis_client
 from tests import test_util
 
 
-class OngoingTripEventStoreTest(unittest.TestCase):
+class OngoingTripStoreTest(unittest.TestCase):
 
     def setUp(self):
         redis_client.client.flushdb()
-        self._store = ongoing_trip_event_store.OngoingTripEventStore()
+        self._store = ongoing_trip_store.OngoingTripStore()
 
     def test_can_append_to_path_and_get_trips_map(self):
         self._store.append_to_path(1, geometry.Point(1, 1))
