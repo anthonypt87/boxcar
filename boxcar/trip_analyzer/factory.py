@@ -1,7 +1,7 @@
-from boxcar.trip_analyzer.trip_analyzer import TripAnalyzer
-from boxcar.trip_analyzer.ongoing_trip_analyzer import OngoingTripAnalyzer
-from boxcar.trip_analyzer.ongoing_trip_analyzer import OngoingTripEventStore
+from boxcar.ongoing_trip_event_store import OngoingTripEventStore
 from boxcar.trip_analyzer.completed_trip_analyzer import CompletedTripAnalyzer
+from boxcar.trip_analyzer.ongoing_trip_analyzer import OngoingTripAnalyzer
+from boxcar.trip_analyzer.trip_analyzer import TripAnalyzer
 
 
 def create_trip_analyzer():
